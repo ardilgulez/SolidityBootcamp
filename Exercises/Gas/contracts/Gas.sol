@@ -71,19 +71,6 @@ contract GasContract {
         }
     }
 
-    function checkForAdmin(address _user) public view {
-        uint8 ii = 0;
-        for (; ii < _administrators.length; ) {
-            if (_administrators[ii] == _user) {
-                return;
-            }
-            unchecked {
-                ++ii;
-            }
-        }
-        revert("Not an admin");
-    }
-
     function addHistory(address _updateAddress) private returns (bool, bool) {
         History memory history = History(
             _updateAddress,
@@ -98,7 +85,7 @@ contract GasContract {
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) public returns (bool status_) {
+    ) external returns (bool status_) {
         require(
             balances[msg.sender] >= _amount,
             "transfer: Insufficient Sender Balance"
@@ -131,7 +118,7 @@ contract GasContract {
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
-    ) public {
+    ) external {
         checkForAdmin(msg.sender);
         require(_ID > 0, "updatePayment: ID must be > 0");
         require(_amount > 0, "updatePayment: Amount must be > 0");
@@ -164,7 +151,7 @@ contract GasContract {
         }
     }
 
-    function addToWhitelist(address _userAddrs, uint8 _tier) public {
+    function addToWhitelist(address _userAddrs, uint8 _tier) external {
         checkForAdmin(msg.sender);
         _whitelist[_userAddrs] = _tier < 3 ? _tier : 3;
         emit AddedToWhitelist(_userAddrs, _tier);
@@ -174,14 +161,14 @@ contract GasContract {
         address _recipient,
         uint256 _amount,
         ImportantStruct calldata _struct // Cannot remove, cannot optimize either because we are not supposed to modify tests
-    ) public {
+    ) external {
         uint8 _tier = _whitelist[msg.sender];
-        require(_tier > 0, "GC-CheckIfWhiteListed: user not whitelisted");
+        require(_tier > 0, "whiteTransfer: user not whitelisted");
         require(
             balances[msg.sender] >= _amount,
-            "GC-whiteTransfers: insufficient sender Balance"
+            "whiteTransfer: insufficient sender Balance"
         );
-        require(_amount > 3, "GC-whiteTransfers: required amount > 3"); // This statement makes the following unchecked block safe
+        require(_amount > 3, "whiteTransfer: required amount > 3"); // This statement makes the following unchecked block safe
         unchecked {
             balances[msg.sender] -= (_amount - _tier);
             balances[_recipient] += (_amount - _tier);
@@ -189,7 +176,7 @@ contract GasContract {
     }
 
     function stringToBytes8(string memory source)
-        public
+        private
         pure
         returns (bytes8 result)
     {
@@ -213,19 +200,36 @@ contract GasContract {
         return _whitelist[_user];
     }
 
-    function balanceOf(address _user) public view returns (uint256) {
+    function balanceOf(address _user) external view returns (uint256) {
         return balances[_user];
     }
 
-    function getTradingMode() public pure returns (bool) {
+    function getTradingMode() external pure returns (bool) {
         return true;
     }
 
-    function getPayments(address _user) public view returns (Payment[] memory) {
+    function getPayments(address _user)
+        external
+        view
+        returns (Payment[] memory)
+    {
         return payments[_user];
     }
 
-    function getPaymentHistory() public view returns (History[] memory) {
+    function getPaymentHistory() external view returns (History[] memory) {
         return paymentHistory;
+    }
+
+    function checkForAdmin(address _user) public view {
+        uint8 ii = 0;
+        for (; ii < _administrators.length; ) {
+            if (_administrators[ii] == _user) {
+                return;
+            }
+            unchecked {
+                ++ii;
+            }
+        }
+        revert("Not an admin");
     }
 }

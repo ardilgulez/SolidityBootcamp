@@ -7,9 +7,9 @@ contract GasContract {
         uint256 amount;
         address recipient;
         address admin; // admins address
-        bytes8 recipientName; // max 8 characters
         uint8 paymentType;
         uint8 adminUpdated;
+        bytes8 recipientName; // max 8 characters
     }
 
     struct History {
@@ -27,8 +27,8 @@ contract GasContract {
     uint256 private immutable _totalSupply;
     uint256 private paymentCounter = 0;
     mapping(address => uint256) private balances;
-    mapping(address => Payment[]) private payments;
     mapping(address => uint8) private _whitelist;
+    mapping(address => Payment[]) private payments;
     History[] private paymentHistory; // when a payment was updated
     address[5] private _administrators;
 
@@ -94,9 +94,9 @@ contract GasContract {
             _amount,
             _recipient,
             address(0),
-            stringToBytes8(_name),
             1,
-            0
+            0,
+            stringToBytes8(_name)
         );
         payments[msg.sender].push(payment);
         return (true);

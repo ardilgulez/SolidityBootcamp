@@ -29,8 +29,8 @@ contract GasContract {
     mapping(address => uint256) private balances;
     mapping(address => uint8) private _whitelist;
     mapping(address => Payment[]) private payments;
+    mapping(uint8 => address) private _administrators;
     History[] private paymentHistory; // when a payment was updated
-    address[5] private _administrators;
 
     event AddedToWhitelist(address indexed userAddress, uint8 tier);
 
@@ -64,13 +64,10 @@ contract GasContract {
     }
 
     function addHistory(address _updateAddress) private returns (bool, bool) {
-        History memory history = History(
-            _updateAddress,
-            block.timestamp,
-            block.number
+        paymentHistory.push(
+            History(_updateAddress, block.timestamp, block.number)
         );
-        paymentHistory.push(history);
-        return (true, true);
+        return (false, false);
     }
 
     function transfer(
@@ -207,7 +204,7 @@ contract GasContract {
 
     function checkForAdmin(address _user) private view {
         uint8 ii = 0;
-        for (; ii < _administrators.length; ) {
+        for (; ii < 5; ) {
             if (_administrators[ii] == _user) {
                 return;
             }

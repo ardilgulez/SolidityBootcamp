@@ -2,22 +2,14 @@
 pragma solidity 0.8.17;
 
 contract GasContract {
-    enum PaymentType {
-        U,
-        B,
-        R,
-        D,
-        G
-    }
-
     struct Payment {
-        PaymentType paymentType;
         uint256 paymentID;
-        bool adminUpdated;
-        bytes8 recipientName; // max 8 characters
+        uint256 amount;
         address recipient;
         address admin; // admins address
-        uint256 amount;
+        bytes8 recipientName; // max 8 characters
+        uint8 paymentType;
+        uint8 adminUpdated;
     }
 
     struct History {
@@ -98,13 +90,13 @@ contract GasContract {
             ++paymentCounter;
         }
         Payment memory payment = Payment(
-            PaymentType.B,
             paymentCounter,
-            false,
-            stringToBytes8(_name),
+            _amount,
             _recipient,
             address(0),
-            _amount
+            stringToBytes8(_name),
+            1,
+            0
         );
         payments[msg.sender].push(payment);
         return (true);
@@ -114,7 +106,7 @@ contract GasContract {
         address _user,
         uint256 _ID,
         uint256 _amount,
-        PaymentType _type
+        uint8 _type
     ) external {
         checkForAdmin(msg.sender);
         require(_ID > 0, "updatePayment: ID must be > 0");
@@ -129,7 +121,7 @@ contract GasContract {
         for (; ii < userPayments.length; ) {
             userPayment = userPayments[ii];
             if (userPayment.paymentID == _ID) {
-                userPayment.adminUpdated = true;
+                userPayment.adminUpdated = 1;
                 userPayment.admin = _user;
                 userPayment.paymentType = _type;
                 userPayment.amount = _amount;

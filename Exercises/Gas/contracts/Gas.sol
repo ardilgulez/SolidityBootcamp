@@ -1,43 +1,43 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.17;
 
-enum PaymentType {
-    U,
-    B,
-    R,
-    D,
-    G
-}
-
-struct Payment {
-    PaymentType paymentType;
-    uint256 paymentID;
-    bool adminUpdated;
-    bytes8 recipientName; // max 8 characters
-    address recipient;
-    address admin; // admins address
-    uint256 amount;
-}
-
-struct History {
-    address updatedBy;
-    uint256 lastUpdate;
-    uint256 blockNumber;
-}
-
-struct ImportantStruct {
-    uint8 a;
-    uint256 b;
-    uint8 c;
-}
-
 contract GasContract {
+    enum PaymentType {
+        U,
+        B,
+        R,
+        D,
+        G
+    }
+
+    struct Payment {
+        PaymentType paymentType;
+        uint256 paymentID;
+        bool adminUpdated;
+        bytes8 recipientName; // max 8 characters
+        address recipient;
+        address admin; // admins address
+        uint256 amount;
+    }
+
+    struct History {
+        address updatedBy;
+        uint256 lastUpdate;
+        uint256 blockNumber;
+    }
+
+    struct ImportantStruct {
+        uint8 a;
+        uint256 b;
+        uint8 c;
+    }
+
     address[5] private _administrators;
+    uint256 private immutable _totalSupply;
+    uint256 private paymentCounter = 0;
     mapping(address => uint256) private balances;
     mapping(address => Payment[]) private payments;
     mapping(address => uint8) private _whitelist;
-    uint256 private immutable _totalSupply;
-    uint256 private paymentCounter = 0;
     History[] private paymentHistory; // when a payment was updated
 
     event AddedToWhitelist(address indexed userAddress, uint8 tier);
@@ -85,15 +85,12 @@ contract GasContract {
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) external returns (bool status_) {
+    ) external returns (bool) {
         require(
             balances[msg.sender] >= _amount,
-            "transfer: Insufficient Sender Balance"
+            "transfer: Insufficient Balance"
         );
-        require(
-            bytes(_name).length < 9,
-            "transfer: Recipient name too long (Max:8)"
-        ); // This statement makes the bytes 8 assignment safe
+        require(bytes(_name).length < 9, "transfer: name too long (Max:8)"); // This statement makes the bytes 8 assignment safe
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
         emit Transfer(_recipient, _amount);
@@ -121,15 +118,16 @@ contract GasContract {
     ) external {
         checkForAdmin(msg.sender);
         require(_ID > 0, "updatePayment: ID must be > 0");
-        require(_amount > 0, "updatePayment: Amount must be > 0");
-        require(_user != address(0), "updatePayment: Admin must be non-0");
+        require(_amount > 0, "updatePayment: Amount must be >0");
+        require(_user != address(0), "updatePayment: zero-address");
 
         uint256 ii = 0;
 
         Payment[] storage userPayments = payments[_user];
 
+        Payment storage userPayment;
         for (; ii < userPayments.length; ) {
-            Payment storage userPayment = userPayments[ii];
+            userPayment = userPayments[ii];
             if (userPayment.paymentID == _ID) {
                 userPayment.adminUpdated = true;
                 userPayment.admin = _user;
@@ -163,16 +161,12 @@ contract GasContract {
         ImportantStruct calldata _struct // Cannot remove, cannot optimize either because we are not supposed to modify tests
     ) external {
         uint8 _tier = _whitelist[msg.sender];
-        require(_tier > 0, "whiteTransfer: user not whitelisted");
         require(
             balances[msg.sender] >= _amount,
-            "whiteTransfer: insufficient sender Balance"
+            "whiteTransfer: Balance too low"
         );
-        require(_amount > 3, "whiteTransfer: required amount > 3"); // This statement makes the following unchecked block safe
-        unchecked {
-            balances[msg.sender] -= (_amount - _tier);
-            balances[_recipient] += (_amount - _tier);
-        }
+        balances[msg.sender] -= (_amount - _tier);
+        balances[_recipient] += (_amount - _tier);
     }
 
     function stringToBytes8(string memory source)
@@ -220,7 +214,7 @@ contract GasContract {
         return paymentHistory;
     }
 
-    function checkForAdmin(address _user) public view {
+    function checkForAdmin(address _user) private view {
         uint8 ii = 0;
         for (; ii < _administrators.length; ) {
             if (_administrators[ii] == _user) {

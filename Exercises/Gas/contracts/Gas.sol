@@ -29,8 +29,8 @@ contract GasContract {
     mapping(address => uint256) private balances;
     mapping(address => Payment[]) private payments;
     mapping(address => uint8) private _whitelist;
-    address[5] private _administrators;
     History[] private paymentHistory; // when a payment was updated
+    address[5] private _administrators;
 
     event AddedToWhitelist(address indexed userAddress, uint8 tier);
 

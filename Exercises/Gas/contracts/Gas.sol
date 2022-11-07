@@ -77,7 +77,7 @@ contract GasContract {
         address _recipient,
         uint256 _amount,
         string calldata _name
-    ) external returns (bool) {
+    ) external {
         require(
             balances[msg.sender] >= _amount,
             "transfer: Insufficient Balance"
@@ -85,7 +85,6 @@ contract GasContract {
         require(bytes(_name).length < 9, "transfer: name too long (Max:8)"); // This statement makes the bytes 8 assignment safe
         balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
         unchecked {
             ++paymentCounter;
         }
@@ -99,7 +98,7 @@ contract GasContract {
             stringToBytes8(_name)
         );
         payments[msg.sender].push(payment);
-        return (true);
+        emit Transfer(_recipient, _amount);
     }
 
     function updatePayment(
